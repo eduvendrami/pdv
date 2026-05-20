@@ -75,6 +75,13 @@ public partial class MainViewModel : BaseViewModel
         IsMenuOpen  = false;
     }
 
+    [RelayCommand(CanExecute = nameof(UserIsManager))]
+    public void NavigateToNFeImport()
+    {
+        CurrentView = App.GetService<NFeImportViewModel>();
+        IsMenuOpen  = false;
+    }
+
     // ── Admin only ───────────────────────────────────────────────────────
     [RelayCommand(CanExecute = nameof(UserIsAdmin))]
     public void NavigateToUsers()

@@ -51,6 +51,7 @@ public partial class App : System.Windows.Application
                 services.AddTransient<ReportsViewModel>();
                 services.AddTransient<UserListViewModel>();
                 services.AddTransient<UserEditViewModel>();
+                services.AddTransient<NFeImportViewModel>();
             })
             .Build();
 
