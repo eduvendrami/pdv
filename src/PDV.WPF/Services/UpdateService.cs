@@ -13,7 +13,7 @@ public class UpdateService
     // ╔════════════════════════════════════════════════════════════╗
     // ║  DADOS DO REPOSITÓRIO NO GITHUB                           ║
     // ╚════════════════════════════════════════════════════════════╝
-    private const string GitHubOwner = "vendrami02";   // username do GitHub (não o e-mail)
+    private const string GitHubOwner = "eduvendrami";   // username do GitHub (não o e-mail)
     private const string GitHubRepo  = "pdv";
 
     // Padrão do arquivo na release: PDV_v1.0.1.exe, PDV_v2.0.0.exe, etc.
