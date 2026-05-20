@@ -1,0 +1,110 @@
+<Window x:Class="PDV.WPF.Views.PaymentDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:conv="clr-namespace:PDV.WPF.Converters"
+        Title="Forma de Pagamento"
+        Height="420" Width="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Style="{StaticResource MaterialDesignWindow}"
+        KeyDown="Window_KeyDown">
+    <Window.Resources>
+        <conv:CurrencyConverter x:Key="Currency"/>
+    </Window.Resources>
+
+    <StackPanel Margin="24">
+        <!-- Total -->
+        <Border Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                CornerRadius="6" Padding="16,12" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="TOTAL A PAGAR: " FontSize="18" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TotalDue, Converter={StaticResource Currency}}"
+                           FontSize="24" FontWeight="Bold" Foreground="White"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Payment lines -->
+        <TextBlock Text="Formas de pagamento:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+        <ItemsControl ItemsSource="{Binding Payments}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="36"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding DataContext.Methods, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  SelectedItem="{Binding Method}"
+                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                  Margin="0,0,6,0"/>
+                        <TextBox x:Name="TxtAmount"
+                                 Grid.Column="1"
+                                 Text="{Binding Amount, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Valor"
+                                 GotFocus="Amount_GotFocus"
+                                 Margin="0,0,6,0"/>
+                        <Button Grid.Column="2"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Foreground="Gray">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Button Content="+ Adicionar forma de pagamento"
+                Style="{StaticResource MaterialDesignFlatButton}"
+                Command="{Binding AddPaymentLineCommand}"
+                HorizontalAlignment="Left" Margin="0,4,0,12"/>
+
+        <!-- Totals -->
+        <Separator Margin="0,0,0,12"/>
+        <Grid Margin="0,2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Total pago:"/>
+            <TextBlock Grid.Column="1" Text="{Binding TotalPaid, Converter={StaticResource Currency}}"
+                       FontWeight="Bold"/>
+        </Grid>
+        <Grid Margin="0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Troco:" FontSize="15" FontWeight="Bold"/>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Change, Converter={StaticResource Currency}}"
+                       FontSize="15" FontWeight="Bold"
+                       Foreground="{DynamicResource MaterialDesign.Brush.Primary}"/>
+        </Grid>
+
+        <!-- Actions -->
+        <Grid Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Content="Cancelar (Esc)"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Command="{Binding CancelCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    Margin="0,0,6,0"/>
+            <Button x:Name="BtnConfirm"
+                    Grid.Column="1"
+                    Content="✓ Confirmar (Enter)"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Command="{Binding ConfirmCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    IsDefault="True"/>
+        </Grid>
+    </StackPanel>
+</Window>

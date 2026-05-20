@@ -1,0 +1,64 @@
+<Window x:Class="PDV.WPF.Views.UpdateProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Atualização do PDV"
+        Height="340" Width="460"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Style="{StaticResource MaterialDesignWindow}">
+
+    <StackPanel Margin="32,28,32,28">
+
+        <!-- Icon + Title -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+            <materialDesign:PackIcon Kind="Download"
+                                     Width="28" Height="28"
+                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                     VerticalAlignment="Center"
+                                     Margin="0,0,10,0"/>
+            <TextBlock Text="Atualização disponível"
+                       FontSize="18" FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Version info -->
+        <TextBlock x:Name="TxtVersion"
+                   Margin="0,0,0,12"
+                   Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"/>
+
+        <!-- Release notes -->
+        <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                CornerRadius="6" Padding="12,10" Margin="0,0,0,20"
+                MaxHeight="80">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="TxtNotes"
+                           TextWrapping="Wrap" FontSize="12"
+                           Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"/>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Progress (hidden until download starts) -->
+        <StackPanel x:Name="PnlProgress" Visibility="Collapsed" Margin="0,0,0,16">
+            <TextBlock x:Name="TxtStatus" Text="Baixando..." Margin="0,0,0,6" FontSize="12"/>
+            <ProgressBar x:Name="PrgDownload"
+                         Height="8" Minimum="0" Maximum="100"
+                         Style="{StaticResource MaterialDesignLinearProgressBar}"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="BtnLater"
+                    Content="Agora não"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Width="110" Margin="0,0,10,0"
+                    Click="BtnLater_Click"/>
+            <Button x:Name="BtnUpdate"
+                    Content="Atualizar agora"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Width="140"
+                    Click="BtnUpdate_Click"/>
+        </StackPanel>
+
+    </StackPanel>
+</Window>

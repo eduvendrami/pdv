@@ -1,0 +1,117 @@
+<UserControl x:Class="PDV.WPF.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:PDV.WPF.Converters">
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="Currency"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVis"/>
+    </UserControl.Resources>
+    <TabControl Margin="16">
+        <TabItem Header="Relatório de Vendas">
+            <DockPanel Margin="8">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <DatePicker materialDesign:HintAssist.Hint="De"
+                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                SelectedDate="{Binding StartDate}" Margin="0,0,8,0" Width="150"/>
+                    <DatePicker materialDesign:HintAssist.Hint="Até"
+                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                SelectedDate="{Binding EndDate}" Margin="0,0,8,0" Width="150"/>
+                    <Button Content="Gerar Relatório" Style="{StaticResource MaterialDesignRaisedButton}"
+                            Command="{Binding LoadSalesReportCommand}" Margin="0,0,8,0"/>
+                    <Button Content="PDF" Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding ExportSalesPdfCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Excel" Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding ExportSalesExcelCommand}"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8"
+                            Visibility="{Binding SalesReport, Converter={StaticResource NullToVis}}">
+                    <Border Background="#E3F2FD" Padding="16,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="Total Vendas" FontSize="12"/>
+                            <TextBlock Text="{Binding SalesReport.TotalSales}" FontSize="20" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#E8F5E9" Padding="16,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="Receita Líquida" FontSize="12"/>
+                            <TextBlock Text="{Binding SalesReport.NetRevenue, Converter={StaticResource Currency}}" FontSize="20" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#FFF9C4" Padding="16,8">
+                        <StackPanel>
+                            <TextBlock Text="Descontos" FontSize="12"/>
+                            <TextBlock Text="{Binding SalesReport.TotalDiscount, Converter={StaticResource Currency}}" FontSize="20" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <DataGrid ItemsSource="{Binding SalesReport.Sales}" AutoGenerateColumns="False"
+                          CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nº Venda" Binding="{Binding SaleNumber}" Width="100"/>
+                        <DataGridTextColumn Header="Data" Binding="{Binding SaleDate, StringFormat=dd/MM/yyyy HH:mm}" Width="130"/>
+                        <DataGridTextColumn Header="Cliente" Binding="{Binding CustomerName}" Width="*"/>
+                        <DataGridTextColumn Header="Total" Binding="{Binding FinalAmount, StringFormat=C2}" Width="100"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="90"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </TabItem>
+
+        <TabItem Header="Relatório de Estoque">
+            <DockPanel Margin="8">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="Gerar Relatório" Style="{StaticResource MaterialDesignRaisedButton}"
+                            Command="{Binding LoadStockReportCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Excel" Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding ExportStockExcelCommand}"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8"
+                            Visibility="{Binding StockReport, Converter={StaticResource NullToVis}}">
+                    <Border Background="#E3F2FD" Padding="16,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="Total Produtos"/>
+                            <TextBlock Text="{Binding StockReport.TotalProducts}" FontSize="20" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#FFEBEE" Padding="16,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="Estoque Baixo"/>
+                            <TextBlock Text="{Binding StockReport.LowStockCount}" FontSize="20" FontWeight="Bold" Foreground="Red"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#E8F5E9" Padding="16,8">
+                        <StackPanel>
+                            <TextBlock Text="Valor Total em Estoque"/>
+                            <TextBlock Text="{Binding StockReport.TotalStockValue, Converter={StaticResource Currency}}" FontSize="20" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <DataGrid ItemsSource="{Binding StockReport.Products}" AutoGenerateColumns="False"
+                          CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Produto" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="Categoria" Binding="{Binding CategoryName}" Width="120"/>
+                        <DataGridTextColumn Header="Estoque" Binding="{Binding StockQuantity, StringFormat=N2}" Width="80"/>
+                        <DataGridTextColumn Header="Mínimo" Binding="{Binding MinStockQuantity, StringFormat=N2}" Width="80"/>
+                        <DataGridTextColumn Header="Preço" Binding="{Binding SalePrice, StringFormat=C2}" Width="90"/>
+                        <DataGridTextColumn Header="Valor Estoque" Binding="{Binding StockValue, StringFormat=C2}" Width="110"/>
+                    </DataGrid.Columns>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLowStock}" Value="True">
+                                    <Setter Property="Background" Value="#FFEEEE"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                </DataGrid>
+            </DockPanel>
+        </TabItem>
+    </TabControl>
+</UserControl>

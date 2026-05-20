@@ -1,0 +1,39 @@
+<UserControl x:Class="PDV.WPF.Views.SupplierListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Novo Fornecedor" Style="{StaticResource MaterialDesignRaisedButton}"
+                    Command="{Binding NewSupplierCommand}"/>
+        </StackPanel>
+        <DataGrid ItemsSource="{Binding Suppliers}" AutoGenerateColumns="False"
+                  CanUserAddRows="False" Style="{StaticResource MaterialDesignDataGrid}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Nome Fantasia" Binding="{Binding TradeName}" Width="140"/>
+                <DataGridTextColumn Header="CNPJ" Binding="{Binding Cnpj}" Width="130"/>
+                <DataGridTextColumn Header="Telefone" Binding="{Binding Phone}" Width="110"/>
+                <DataGridTextColumn Header="Cidade" Binding="{Binding City}" Width="100"/>
+                <DataGridTemplateColumn Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.EditSupplierCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Pencil"/>
+                                </Button>
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.DeleteSupplierCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" Foreground="Red">
+                                    <materialDesign:PackIcon Kind="Delete"/>
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

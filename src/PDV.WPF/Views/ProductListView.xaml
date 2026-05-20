@@ -1,0 +1,282 @@
+<UserControl x:Class="PDV.WPF.Views.ProductListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:PDV.WPF.Converters">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter        x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <conv:CurrencyConverter                x:Key="Currency"/>
+        <conv:BoolToStringConverter            x:Key="BoolToStr"/>
+    </UserControl.Resources>
+
+    <DockPanel Margin="20,16,20,16">
+
+        <!-- ══ Header bar ══ -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="Produtos"
+                       FontSize="22" FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+
+            <Button Grid.Column="1"
+                    Content="+ Novo Produto"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Command="{Binding NewProductCommand}"
+                    Visibility="{Binding CanEdit, Converter={StaticResource BoolToVis}}"/>
+        </Grid>
+
+        <!-- ══ Filter bar ══ -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                CornerRadius="8" Padding="16,12" Margin="0,0,0,12"
+                materialDesign:ElevationAssist.Elevation="Dp1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <!-- Admin: show inactive -->
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Search text -->
+                <TextBox Grid.Column="0"
+                         materialDesign:HintAssist.Hint="Buscar por nome, barcode, código ou categoria..."
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <!-- Category filter -->
+                <ComboBox Grid.Column="2"
+                          materialDesign:HintAssist.Hint="Categoria"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                          ItemsSource="{Binding Categories}"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"
+                          SelectedValue="{Binding FilterCategoryId}"/>
+
+                <!-- Low-stock toggle -->
+                <ToggleButton Grid.Column="4"
+                              Style="{StaticResource MaterialDesignOutlinedButton}"
+                              IsChecked="{Binding ShowLowStockOnly}"
+                              ToolTip="Exibir apenas produtos com estoque baixo">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AlertCircleOutline" Width="16" Height="16"
+                                                 VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="Estoque baixo" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </ToggleButton>
+
+                <!-- Show inactive (Admin only) -->
+                <ToggleButton Grid.Column="6"
+                              Style="{StaticResource MaterialDesignOutlinedButton}"
+                              IsChecked="{Binding ShowInactive}"
+                              ToolTip="Exibir produtos inativos"
+                              Visibility="{Binding CanSeeInactive, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="EyeOff" Width="16" Height="16"
+                                                 VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="Inativos" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </ToggleButton>
+
+                <!-- Clear filters -->
+                <Button Grid.Column="8"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Command="{Binding ClearFiltersCommand}"
+                        ToolTip="Limpar filtros">
+                    <materialDesign:PackIcon Kind="FilterOff" Width="18" Height="18"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ══ Summary chips ══ -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Border Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                    CornerRadius="12" Padding="10,3" Margin="0,0,8,0">
+                <TextBlock Foreground="White" FontSize="11">
+                    <Run Text="{Binding Products.Count, Mode=OneWay}"/>
+                    <Run Text=" produto(s) exibido(s)"/>
+                </TextBlock>
+            </Border>
+        </StackPanel>
+
+        <!-- ══ DataGrid ══ -->
+        <DataGrid ItemsSource="{Binding Products}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True"
+                  SelectedItem="{Binding SelectedProduct}"
+                  Style="{StaticResource MaterialDesignDataGrid}"
+                  materialDesign:DataGridAssist.CellPadding="8,6"
+                  materialDesign:DataGridAssist.ColumnHeaderPadding="8,6">
+
+            <DataGrid.Columns>
+
+                <!-- Status chip -->
+                <DataGridTemplateColumn Header="Status" Width="85" SortMemberPath="IsActive">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="10" Padding="8,2" HorizontalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text"       Value="Ativo"/>
+                                            <Setter Property="Foreground" Value="#388E3C"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                    <Setter Property="Text"       Value="Inativo"/>
+                                                    <Setter Property="Foreground" Value="#C62828"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Código"   Binding="{Binding InternalCode}" Width="80"/>
+                <DataGridTextColumn Header="Barcode"  Binding="{Binding Barcode}"      Width="115"/>
+                <DataGridTextColumn Header="Nome"     Binding="{Binding Name}"         Width="*"/>
+                <DataGridTextColumn Header="Categoria" Binding="{Binding CategoryName}" Width="110"/>
+
+                <!-- Sale price -->
+                <DataGridTextColumn Header="Venda (R$)"
+                                    Binding="{Binding SalePrice, StringFormat=C2}"
+                                    Width="95"/>
+
+                <!-- Margin % — visible to managers/admin -->
+                <DataGridTextColumn Header="Markup"
+                                    Binding="{Binding Margin, StringFormat=N1}"
+                                    Width="70"/>
+
+                <!-- Stock -->
+                <DataGridTemplateColumn Header="Estoque" Width="85" SortMemberPath="StockQuantity">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Right" Margin="0,0,4,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding StockQuantity, StringFormat=N2}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsLowStock}" Value="True">
+                                                <Setter Property="Foreground" Value="#E53935"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Un." Binding="{Binding UnitOfMeasure}" Width="60"/>
+
+                <!-- Actions column -->
+                <DataGridTemplateColumn Header="Ações" Width="130">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+
+                                <!-- Editar — Gerente+ -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.EditProductCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Visibility="{Binding DataContext.CanEdit,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                                     Converter={StaticResource BoolToVis}}"
+                                        ToolTip="Editar produto">
+                                    <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18"/>
+                                </Button>
+
+                                <!-- Ativar/Desativar — Admin only -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.ToggleActiveCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Visibility="{Binding DataContext.CanToggle,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                                     Converter={StaticResource BoolToVis}}"
+                                        ToolTip="{Binding IsActive, Converter={StaticResource BoolToStr},
+                                                  ConverterParameter='Desativar produto|Ativar produto'}">
+                                    <materialDesign:PackIcon Width="18" Height="18">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind"       Value="ToggleSwitch"/>
+                                                <Setter Property="Foreground" Value="#388E3C"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                        <Setter Property="Kind"       Value="ToggleSwitchOff"/>
+                                                        <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </Button>
+
+                                <!-- Excluir permanente — Admin only -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.DeleteProductCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="#E53935"
+                                        Visibility="{Binding DataContext.CanDelete,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                                     Converter={StaticResource BoolToVis}}"
+                                        ToolTip="Excluir permanentemente">
+                                    <materialDesign:PackIcon Kind="DeleteForever" Width="18" Height="18"/>
+                                </Button>
+
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+
+            <!-- Row tinting: inactive = grey-out, low-stock = light red -->
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsLowStock}" Value="True">
+                            <Setter Property="Background" Value="#FFFDE7"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsActive}" Value="False">
+                            <Setter Property="Background" Value="#F5F5F5"/>
+                            <Setter Property="Opacity"    Value="0.65"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+        </DataGrid>
+
+    </DockPanel>
+</UserControl>

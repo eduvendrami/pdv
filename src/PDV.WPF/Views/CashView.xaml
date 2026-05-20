@@ -1,0 +1,106 @@
+<UserControl x:Class="PDV.WPF.Views.CashView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:PDV.WPF.Converters">
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="Currency"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    </UserControl.Resources>
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="320"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Session info -->
+        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+            <!-- Closed state -->
+            <materialDesign:Card Padding="24" Margin="0,0,0,16"
+                                 Visibility="{Binding IsClosed, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="Caixa Fechado" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+                    <TextBox materialDesign:HintAssist.Hint="Saldo Inicial (R$)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Text="{Binding OpeningBalance}" Margin="0,8"/>
+                    <Button Content="Abrir Caixa" Style="{StaticResource MaterialDesignRaisedButton}"
+                            Command="{Binding OpenCashCommand}" Margin="0,8"/>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Open state -->
+            <materialDesign:Card Padding="24"
+                                 Visibility="{Binding IsOpen, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="Caixa Aberto" FontSize="20" FontWeight="Bold" Foreground="Green" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding CurrentSession.OpenedAt, StringFormat='Aberto em: {0:dd/MM/yyyy HH:mm}'}" Margin="0,0,0,16"/>
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Saldo Inicial:"/>
+                        <TextBlock Grid.Column="1" Text="{Binding CurrentSession.OpeningBalance, Converter={StaticResource Currency}}" FontWeight="Bold"/>
+                    </Grid>
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Saldo Esperado:"/>
+                        <TextBlock Grid.Column="1" Text="{Binding CurrentSession.ExpectedBalance, Converter={StaticResource Currency}}" FontWeight="Bold"/>
+                    </Grid>
+
+                    <Separator Margin="0,16"/>
+                    <TextBlock Text="Movimentações" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <DataGrid ItemsSource="{Binding CurrentSession.Movements}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" MaxHeight="200"
+                              Style="{StaticResource MaterialDesignDataGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="100"/>
+                            <DataGridTextColumn Header="Valor" Binding="{Binding Amount, StringFormat=C2}" Width="100"/>
+                            <DataGridTextColumn Header="Descrição" Binding="{Binding Description}" Width="*"/>
+                            <DataGridTextColumn Header="Hora" Binding="{Binding CreatedAt, StringFormat=HH:mm}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </materialDesign:Card>
+        </StackPanel>
+
+        <!-- Actions -->
+        <materialDesign:Card Grid.Column="1" Padding="16">
+            <StackPanel>
+                <!-- Close cash -->
+                <StackPanel Visibility="{Binding IsOpen, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Fechamento de Caixa" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <TextBox materialDesign:HintAssist.Hint="Saldo em Caixa (R$)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Text="{Binding ClosingBalance}" Margin="0,6"/>
+                    <TextBox materialDesign:HintAssist.Hint="Observações"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Text="{Binding SessionNotes}" Margin="0,6"/>
+                    <Button Content="Fechar Caixa" Style="{StaticResource MaterialDesignRaisedButton}"
+                            Command="{Binding CloseCashCommand}" Margin="0,8"/>
+
+                    <Separator Margin="0,16"/>
+                    <TextBlock Text="Suprimento / Sangria" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <ComboBox materialDesign:HintAssist.Hint="Tipo"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              ItemsSource="{Binding MovementTypes}"
+                              SelectedItem="{Binding MovementType}" Margin="0,6"/>
+                    <TextBox materialDesign:HintAssist.Hint="Valor (R$)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Text="{Binding MovementAmount}" Margin="0,6"/>
+                    <TextBox materialDesign:HintAssist.Hint="Descrição"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Text="{Binding MovementDescription}" Margin="0,6"/>
+                    <Button Content="Registrar Movimento" Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding AddMovementCommand}" Margin="0,4"/>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="Green"
+                           TextWrapping="Wrap" Margin="0,8"/>
+            </StackPanel>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

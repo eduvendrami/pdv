@@ -1,0 +1,33 @@
+# Build
+bin/
+obj/
+publish/
+release/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docobj
+
+# Rider / JetBrains
+.idea/
+
+# .NET
+*.dll
+*.exe
+!src/**/*.exe
+
+# Banco de dados local (fica em %LocalAppData%, não no projeto)
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store

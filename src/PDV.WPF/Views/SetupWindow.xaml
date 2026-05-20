@@ -1,0 +1,125 @@
+<Window x:Class="PDV.WPF.Views.SetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:conv="clr-namespace:PDV.WPF.Converters"
+        Title="PDV — Configuração Inicial"
+        Height="620" Width="460"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Style="{StaticResource MaterialDesignWindow}"
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
+
+    <Window.Resources>
+        <conv:EmptyStringToVisibilityConverter x:Key="StrToVis"/>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Faixa lateral colorida -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Rectangle Grid.Column="0"
+                   Fill="{DynamicResource MaterialDesign.Brush.Primary}"/>
+
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="36,32,36,32">
+
+                <!-- Logo / Brand -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <materialDesign:PackIcon Kind="Store"
+                                             Width="36" Height="36"
+                                             Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,10,0"/>
+                    <TextBlock Text="PDV"
+                               FontSize="32" FontWeight="Bold"
+                               Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Text="Material de Construção"
+                           FontSize="13"
+                           Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                           Margin="0,0,0,32"/>
+
+                <!-- Welcome text -->
+                <TextBlock Text="Bem-vindo!"
+                           FontSize="22" FontWeight="Bold"
+                           Margin="0,0,0,6"/>
+
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,28"
+                           Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}">
+                    Esta é a primeira execução do sistema. Crie a conta de
+                    <Run FontWeight="SemiBold">Administrador</Run>
+                    para começar a usar o PDV.
+                </TextBlock>
+
+                <!-- ── Seção: Dados do administrador ── -->
+                <TextBlock Text="CONTA DO ADMINISTRADOR"
+                           FontSize="10" FontWeight="Bold"
+                           Opacity="0.5" Margin="0,0,0,12"/>
+
+                <TextBox x:Name="TxtFullName"
+                         materialDesign:HintAssist.Hint="Nome Completo *"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,14"/>
+
+                <TextBox x:Name="TxtUsername"
+                         materialDesign:HintAssist.Hint="Nome de Usuário (login) *"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,14"/>
+
+                <PasswordBox x:Name="PwdPassword"
+                             materialDesign:HintAssist.Hint="Senha *"
+                             Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                             Margin="0,0,0,14"
+                             PasswordChanged="PwdPassword_Changed"/>
+
+                <PasswordBox x:Name="PwdConfirm"
+                             materialDesign:HintAssist.Hint="Confirmar Senha *"
+                             Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                             Margin="0,0,0,24"
+                             PasswordChanged="PwdConfirm_Changed"/>
+
+                <!-- Error -->
+                <Border Background="#FFFFE0E0" CornerRadius="6" Padding="12,8"
+                        Margin="0,0,0,16"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StrToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AlertCircle" Width="18" Height="18"
+                                                 Foreground="#FFC62828"
+                                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   Foreground="#FFC62828" FontWeight="SemiBold"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Button -->
+                <Button Content="CRIAR CONTA E CONTINUAR"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Command="{Binding SaveCommand}"
+                        IsDefault="True"
+                        Height="44"
+                        FontSize="13" FontWeight="Bold"/>
+
+                <!-- Footer note -->
+                <TextBlock TextWrapping="Wrap" Margin="0,20,0,0"
+                           FontSize="11"
+                           Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center">
+                    Você poderá cadastrar mais usuários dentro do sistema,
+                    na seção Administração.
+                </TextBlock>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
