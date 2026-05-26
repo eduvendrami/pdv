@@ -8,26 +8,29 @@ namespace PDV.Application.Services;
 
 public class StockService : IStockService
 {
-    private readonly IUnitOfWork _uow;
+    private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IMapper _mapper;
 
-    public StockService(IUnitOfWork uow, IMapper mapper)
+    public StockService(IUnitOfWorkFactory uowFactory, IMapper mapper)
     {
-        _uow = uow;
+        _uowFactory = uowFactory;
         _mapper = mapper;
     }
 
     public async Task<IEnumerable<StockMovementDto>> GetMovementsAsync(int? productId = null)
     {
+        using var uow = _uowFactory.Create();
         var movements = productId.HasValue
-            ? await _uow.StockMovements.FindAsync(m => m.ProductId == productId.Value)
-            : await _uow.StockMovements.GetAllAsync();
+            ? await uow.StockMovements.FindAsync(m => m.ProductId == productId.Value)
+            : await uow.StockMovements.GetAllAsync();
         return _mapper.Map<IEnumerable<StockMovementDto>>(movements);
     }
 
     public async Task AdjustStockAsync(AdjustStockDto dto, int userId)
     {
-        var product = await _uow.Products.GetByIdAsync(dto.ProductId)
+        using var uow = _uowFactory.Create();
+
+        var product = await uow.Products.GetByIdAsync(dto.ProductId)
             ?? throw new InvalidOperationException("Produto não encontrado.");
 
         var previous = product.StockQuantity;
@@ -38,7 +41,7 @@ public class StockService : IStockService
         else
             product.StockQuantity = dto.Quantity;
 
-        await _uow.Products.UpdateAsync(product);
+        await uow.Products.UpdateAsync(product);
 
         var movement = new StockMovement
         {
@@ -50,13 +53,14 @@ public class StockService : IStockService
             Reason = dto.Reason,
             UserId = userId
         };
-        await _uow.StockMovements.AddAsync(movement);
-        await _uow.SaveChangesAsync();
+        await uow.StockMovements.AddAsync(movement);
+        await uow.SaveChangesAsync();
     }
 
     public async Task<IEnumerable<ProductDto>> GetLowStockProductsAsync()
     {
-        var products = await _uow.Products.GetLowStockAsync();
+        using var uow = _uowFactory.Create();
+        var products = await uow.Products.GetLowStockAsync();
         return _mapper.Map<IEnumerable<ProductDto>>(products);
     }
 }

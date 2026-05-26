@@ -10,17 +10,19 @@ namespace PDV.Application.Services;
 
 public class ReportService : IReportService
 {
-    private readonly IUnitOfWork _uow;
+    private readonly IUnitOfWorkFactory _uowFactory;
 
-    public ReportService(IUnitOfWork uow)
+    public ReportService(IUnitOfWorkFactory uowFactory)
     {
-        _uow = uow;
-        QuestPDF.Settings.License = LicenseType.Community;
+        _uowFactory = uowFactory;
     }
 
-    public async Task<SalesReportDto> GetSalesReportAsync(DateTime start, DateTime end)
+    public async Task<SalesReportDto> GetSalesReportAsync(DateTime start, DateTime end, bool includeCancelled = false)
     {
-        var sales = await _uow.Sales.GetByDateRangeAsync(start, end.AddDays(1).AddSeconds(-1));
+        using var uow = _uowFactory.Create();
+        var sales = await uow.Sales.GetByDateRangeAsync(start, end.AddDays(1).AddSeconds(-1));
+
+        // Totais e métricas consideram apenas vendas finalizadas (canceladas tiveram estoque estornado).
         var salesList = sales.Where(s => s.Status == SaleStatus.Finalizada).ToList();
 
         var report = new SalesReportDto
@@ -33,14 +35,22 @@ public class ReportService : IReportService
             NetRevenue = salesList.Sum(s => s.FinalAmount)
         };
 
-        report.Sales = salesList.Select(s => new SaleSummaryDto
-        {
-            SaleNumber = s.SaleNumber,
-            SaleDate = s.SaleDate,
-            CustomerName = s.Customer?.Name,
-            FinalAmount = s.FinalAmount,
-            Status = s.Status.ToString()
-        }).ToList();
+        // A lista exibida inclui canceladas apenas quando o flag estiver ligado (só para consulta).
+        var listSource = includeCancelled
+            ? sales.Where(s => s.Status is SaleStatus.Finalizada or SaleStatus.Cancelada)
+            : salesList;
+
+        report.Sales = listSource
+            .OrderByDescending(s => s.SaleDate)
+            .Select(s => new SaleSummaryDto
+            {
+                Id = s.Id,
+                SaleNumber = s.SaleNumber,
+                SaleDate = s.SaleDate,
+                CustomerName = s.Customer?.Name,
+                FinalAmount = s.FinalAmount,
+                Status = s.Status.ToString()
+            }).ToList();
 
         var itemGroups = salesList
             .SelectMany(s => s.Items)
@@ -67,7 +77,8 @@ public class ReportService : IReportService
 
     public async Task<StockReportDto> GetStockReportAsync()
     {
-        var products = await _uow.Products.FindAsync(p => p.IsActive);
+        using var uow = _uowFactory.Create();
+        var products = await uow.Products.FindAsync(p => p.IsActive);
         var productList = products.ToList();
 
         return new StockReportDto

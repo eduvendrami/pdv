@@ -82,10 +82,13 @@ public partial class ProductEditViewModel : BaseViewModel
             _editingId = null;
             DialogTitle     = "Novo Produto";
             Name = Description = string.Empty;
-            Barcode = InternalCode = null;
+            Barcode      = null;
             CostPrice = SalePrice = StockQuantity = MinStockQuantity = 0;
             UnitOfMeasure = UnitOfMeasure.Unidade;
             CategoryId = SupplierId = null;
+
+            // Gera automaticamente o próximo código interno
+            InternalCode = await _productService.GetNextInternalCodeAsync();
         }
 
         RefreshMargin();

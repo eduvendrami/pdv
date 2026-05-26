@@ -20,6 +20,7 @@ public class SaleRepository : Repository<Sale>, ISaleRepository
 
     public async Task<IEnumerable<Sale>> GetByDateRangeAsync(DateTime start, DateTime end) =>
         await _dbSet
+            .AsNoTracking()   // leitura sempre fresca: evita devolver entidades em cache (ex.: venda cancelada em outro contexto)
             .Include(s => s.Items).ThenInclude(i => i.Product)
             .Include(s => s.Payments)
             .Include(s => s.Customer)
@@ -42,8 +43,12 @@ public class SaleRepository : Repository<Sale>, ISaleRepository
     public async Task<decimal> GetTotalByDateAsync(DateTime date)
     {
         var next = date.AddDays(1);
-        return await _dbSet
+        // SQLite não traduz agregados (SUM/AVG) sobre decimal — filtra no servidor
+        // e soma em memória (apenas as vendas do dia).
+        var amounts = await _dbSet
             .Where(s => s.SaleDate >= date && s.SaleDate < next && s.Status == SaleStatus.Finalizada)
-            .SumAsync(s => (decimal?)s.FinalAmount) ?? 0;
+            .Select(s => s.FinalAmount)
+            .ToListAsync();
+        return amounts.Sum();
     }
 }

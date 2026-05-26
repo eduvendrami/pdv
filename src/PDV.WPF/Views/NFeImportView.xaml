@@ -9,6 +9,18 @@
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
         <conv:EmptyStringToVisibilityConverter x:Key="StrToVis"/>
         <conv:BoolToStringConverter            x:Key="BoolToStr"/>
+        <conv:DecimalInputConverter            x:Key="DecInput"/>
+
+        <!-- Seleciona todo o texto ao entrar na edição (digitar substitui) -->
+        <Style x:Key="GridEditBox" TargetType="TextBox">
+            <EventSetter Event="GotFocus" Handler="EditingText_GotFocus"/>
+        </Style>
+
+        <!-- Células só-leitura não param o TAB -->
+        <Style x:Key="ReadOnlyCell" TargetType="DataGridCell">
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
     </UserControl.Resources>
 
     <DockPanel Margin="20,16,20,16">
@@ -172,12 +184,8 @@
                         <materialDesign:PackIcon Kind="Tune" Width="18" Height="18"
                                                  VerticalAlignment="Center" Margin="0,0,12,0"
                                                  Opacity="0.6"/>
-                        <TextBlock Text="Markup padrão:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBox materialDesign:HintAssist.Hint="%"
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 Width="80" Height="36"
-                                 Text="{Binding DefaultMarkup, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="%" VerticalAlignment="Center" Margin="4,0,24,0" Opacity="0.6"/>
+                        <TextBlock Text="Edite os itens na tabela antes de importar."
+                                   VerticalAlignment="Center" Margin="0,0,24,0" Opacity="0.7"/>
 
                         <CheckBox IsChecked="{Binding AddToStock}"
                                   VerticalAlignment="Center">
@@ -206,7 +214,8 @@
                 <TextBlock Text="PRODUTOS DA NOTA" FontSize="10" FontWeight="Bold"
                            Opacity="0.5" Margin="0,0,0,8"/>
 
-                <DataGrid ItemsSource="{Binding Items}"
+                <DataGrid x:Name="ItemsGrid"
+                          ItemsSource="{Binding Items}"
                           AutoGenerateColumns="False"
                           CanUserAddRows="False"
                           IsReadOnly="False"
@@ -215,18 +224,13 @@
                           Margin="0,0,0,16">
                     <DataGrid.Columns>
 
-                        <!-- Importar checkbox -->
-                        <DataGridTemplateColumn Header="Imp." Width="50">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding Import, UpdateSourceTrigger=PropertyChanged}"
-                                              HorizontalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                        <!-- Importar checkbox (Espaço alterna) -->
+                        <DataGridCheckBoxColumn Header="Imp." Width="50"
+                                                Binding="{Binding Import, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <!-- Status chip -->
-                        <DataGridTemplateColumn Header="Status" Width="90" SortMemberPath="Status">
+                        <DataGridTemplateColumn Header="Status" Width="90" SortMemberPath="Status"
+                                                CellStyle="{StaticResource ReadOnlyCell}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="10" Padding="6,2" HorizontalAlignment="Center">
@@ -257,30 +261,26 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="Código"  Binding="{Binding InternalCode}" Width="75"/>
-                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}"      Width="115"/>
-                        <DataGridTextColumn Header="Nome"    Binding="{Binding Name}"         Width="*"/>
-                        <DataGridTextColumn Header="Un."     Binding="{Binding UnitLabel}"    Width="45"/>
-                        <DataGridTextColumn Header="Qtd"
-                                            Binding="{Binding Quantity, StringFormat=N2}"     Width="60"/>
-                        <DataGridTextColumn Header="Custo (R$)"
-                                            Binding="{Binding CostPrice, StringFormat=C2}"   Width="90"/>
+                        <DataGridTextColumn Header="Código"  Binding="{Binding InternalCode}" Width="75"
+                                            EditingElementStyle="{StaticResource GridEditBox}"/>
+                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}"      Width="115"
+                                            EditingElementStyle="{StaticResource GridEditBox}"/>
+                        <DataGridTextColumn Header="Nome"    Binding="{Binding Name}"         Width="*"
+                                            EditingElementStyle="{StaticResource GridEditBox}"/>
+                        <DataGridTextColumn Header="Un."     Binding="{Binding UnitLabel}"    Width="45"
+                                            IsReadOnly="True" CellStyle="{StaticResource ReadOnlyCell}"/>
 
-                        <!-- Preço de venda (editável) -->
-                        <DataGridTemplateColumn Header="Venda (R$)" Width="100">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding SalePrice, StringFormat=C2}"
-                                               VerticalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellEditingTemplate>
-                                <DataTemplate>
-                                    <TextBox Text="{Binding SalePrice, UpdateSourceTrigger=PropertyChanged}"
-                                             materialDesign:HintAssist.Hint="R$"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellEditingTemplate>
-                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Qtd" Width="60"
+                                            Binding="{Binding Quantity, Converter={StaticResource DecInput}}"
+                                            EditingElementStyle="{StaticResource GridEditBox}"/>
+
+                        <DataGridTextColumn Header="Custo (R$)" Width="90"
+                                            Binding="{Binding CostPrice, Converter={StaticResource DecInput}}"
+                                            EditingElementStyle="{StaticResource GridEditBox}"/>
+
+                        <DataGridTextColumn Header="Venda (R$)" Width="100"
+                                            Binding="{Binding SalePrice, Converter={StaticResource DecInput}}"
+                                            EditingElementStyle="{StaticResource GridEditBox}"/>
 
                     </DataGrid.Columns>
 
@@ -291,6 +291,14 @@
                                 <DataTrigger Binding="{Binding IsExisting}" Value="True">
                                     <Setter Property="Background" Value="#F3F8FF"/>
                                 </DataTrigger>
+                                <!-- Item marcado para importar sem preço de venda preenchido -->
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Import}" Value="True"/>
+                                        <Condition Binding="{Binding SalePrice}" Value="0"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Background" Value="#FFF8E1"/>
+                                </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
                     </DataGrid.RowStyle>

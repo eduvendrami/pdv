@@ -38,7 +38,7 @@ public partial class UserListViewModel : BaseViewModel
         var dialog = new Views.UserEditDialog
         {
             DataContext = vm,
-            Owner = System.Windows.Application.Current.MainWindow
+            Owner = App.GetMainWindow()
         };
         if (dialog.ShowDialog() == true) _ = LoadAsync();
     }
@@ -52,7 +52,7 @@ public partial class UserListViewModel : BaseViewModel
         var dialog = new Views.UserEditDialog
         {
             DataContext = vm,
-            Owner = System.Windows.Application.Current.MainWindow
+            Owner = App.GetMainWindow()
         };
         if (dialog.ShowDialog() == true) _ = LoadAsync();
     }

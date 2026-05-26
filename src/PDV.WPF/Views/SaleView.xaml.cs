@@ -46,12 +46,20 @@ public partial class SaleView : UserControl
     private void ApplyColumnPermissions()
     {
         if (_vm == null) return;
+
         var discCol = GridItems.Columns
             .FirstOrDefault(c => c.Header?.ToString() == "Desc.");
         if (discCol != null)
             discCol.Visibility = _vm.CanEditItemDiscount
                 ? System.Windows.Visibility.Visible
                 : System.Windows.Visibility.Collapsed;
+
+        // Preço unitário: visível para todos, mas editável apenas para Gerente+
+        // (mesma regra aplicada no servidor em SaleService.CreateSaleAsync).
+        var priceCol = GridItems.Columns
+            .FirstOrDefault(c => c.Header?.ToString() == "Preço Un.");
+        if (priceCol != null)
+            priceCol.IsReadOnly = !_vm.CanEditItemPrice;
     }
 
     private void FocusSearch()
@@ -87,24 +95,23 @@ public partial class SaleView : UserControl
         {
             case Key.Enter:
                 if (_vm.ShowSearchResults)
-                    _vm.ConfirmSelectedResult();
+                    _ = _vm.ConfirmSelectedResultAsync();
                 else
                     _vm.SearchCommand.Execute(null);
                 e.Handled = true;
                 break;
 
-            // Seta para baixo: move foco direto para a lista e navega
+            // Setas: movem a seleção e transferem o foco para a lista
+            // (necessário para o destaque visual funcionar no tema Material Design)
             case Key.Down when _vm.ShowSearchResults:
                 _vm.MoveSelection(+1);
-                FocusList();
-                ScrollResultIntoView();
+                FocusListAndScroll();
                 e.Handled = true;
                 break;
 
             case Key.Up when _vm.ShowSearchResults:
                 _vm.MoveSelection(-1);
-                FocusList();
-                ScrollResultIntoView();
+                FocusListAndScroll();
                 e.Handled = true;
                 break;
 
@@ -113,7 +120,7 @@ public partial class SaleView : UserControl
                 e.Handled = true;
                 break;
 
-            case Key.F9:
+            case Key.F3:
                 _vm.FinalizeSaleCommand.Execute(null);
                 e.Handled = true;
                 break;
@@ -138,7 +145,7 @@ public partial class SaleView : UserControl
     private void LstResults_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (_vm == null) return;
-        _vm.ConfirmSelectedResult();
+        _ = _vm.ConfirmSelectedResultAsync();
         e.Handled = true;
     }
 
@@ -149,7 +156,7 @@ public partial class SaleView : UserControl
         switch (e.Key)
         {
             case Key.Enter:
-                _vm.ConfirmSelectedResult();
+                _ = _vm.ConfirmSelectedResultAsync();
                 e.Handled = true;
                 break;
 
@@ -164,6 +171,18 @@ public partial class SaleView : UserControl
                 _vm.MoveSelection(-1);
                 FocusSearch();
                 e.Handled = true;
+                break;
+
+            // Qualquer letra, dígito ou backspace: volta ao campo de busca para
+            // que o operador possa refinar sem precisar clicar
+            default:
+                bool isText = (e.Key >= Key.A      && e.Key <= Key.Z)
+                           || (e.Key >= Key.D0      && e.Key <= Key.D9)
+                           || (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)
+                           || e.Key == Key.Back
+                           || e.Key == Key.Space;
+                if (isText)
+                    FocusSearch();
                 break;
         }
     }
@@ -193,7 +212,7 @@ public partial class SaleView : UserControl
                 e.Handled = true;
                 break;
 
-            case Key.F9:
+            case Key.F3:
                 _vm.FinalizeSaleCommand.Execute(null);
                 e.Handled = true;
                 break;

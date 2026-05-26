@@ -10,14 +10,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
-        // Transient DbContext: each service gets its own instance, preventing the
-        // singleton DbContext anti-pattern when resolving from the WPF root container.
-        services.AddDbContext<AppDbContext>(
-            options => options.UseSqlite(connectionString),
-            ServiceLifetime.Transient,
-            ServiceLifetime.Singleton); // Options builder is safe as singleton
+        // DbContextFactory: o contexto é criado/descartado por unidade de trabalho,
+        // não injetado como Transient enraizado no container raiz do WPF (o que vazaria).
+        // A factory é singleton; os contextos que ela cria NÃO são rastreados pelo DI.
+        services.AddDbContextFactory<AppDbContext>(
+            options => options.UseSqlite(connectionString));
 
-        services.AddTransient<IUnitOfWork, UnitOfWork>();
+        // Singleton: sem estado próprio, apenas embrulha a IDbContextFactory.
+        services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
 
         return services;
     }

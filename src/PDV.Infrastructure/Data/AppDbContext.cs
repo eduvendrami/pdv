@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PDV.Domain.Entities;
+using PDV.Domain.Interfaces;
 
 namespace PDV.Infrastructure.Data;
 
@@ -44,6 +45,15 @@ public class AppDbContext : DbContext
         {
             if (entry.State == EntityState.Modified)
                 entry.Entity.UpdatedAt = DateTime.Now;
+
+            // Regenera o token de concorrência a cada inserção/atualização.
+            // O EF compara o valor ORIGINAL no WHERE do UPDATE, detectando
+            // alterações concorrentes (ex.: dois caixas baixando o mesmo estoque).
+            if (entry.Entity is IConcurrencyToken token &&
+                entry.State is EntityState.Added or EntityState.Modified)
+            {
+                token.RowVersion = Guid.NewGuid().ToByteArray();
+            }
         }
     }
 }

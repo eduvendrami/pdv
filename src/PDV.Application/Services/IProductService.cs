@@ -18,4 +18,11 @@ public interface IProductService
     /// <summary>Retorna todos os produtos, incluindo inativos. Admin only.</summary>
     Task<IEnumerable<ProductDto>> GetAllIncludingInactiveAsync();
     Task<CategoryDto> CreateCategoryAsync(string name, string? description);
+
+    /// <summary>
+    /// Lê o maior InternalCode numérico existente (incluindo inativos)
+    /// e retorna o próximo valor com o mesmo zero-padding.
+    /// Ex.: último "00042" → retorna "00043".
+    /// </summary>
+    Task<string> GetNextInternalCodeAsync();
 }

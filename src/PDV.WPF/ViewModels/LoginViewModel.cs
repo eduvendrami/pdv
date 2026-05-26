@@ -17,12 +17,9 @@ public partial class LoginViewModel : BaseViewModel
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
-    //public IAsyncRelayCommand<object> LoginCommand { get; }
-
     public LoginViewModel(IAuthService authService)
     {
         _authService = authService;
-        //LoginCommand = new AsyncRelayCommand<object>(LoginAsync);
     }
 
     [RelayCommand]

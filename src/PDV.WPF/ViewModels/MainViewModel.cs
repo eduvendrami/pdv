@@ -90,6 +90,13 @@ public partial class MainViewModel : BaseViewModel
         IsMenuOpen  = false;
     }
 
+    [RelayCommand(CanExecute = nameof(UserIsAdmin))]
+    public void NavigateToBackup()
+    {
+        CurrentView = App.GetService<BackupViewModel>();
+        IsMenuOpen  = false;
+    }
+
     // ── CanExecute guards ────────────────────────────────────────────────
     private bool UserIsManager() => SessionManager.CanAccessManagement;
     private bool UserIsAdmin()   => SessionManager.CanAccessUsers;
@@ -119,7 +126,7 @@ public partial class MainViewModel : BaseViewModel
 
             var win = new Views.UpdateProgressWindow(release)
             {
-                Owner = System.Windows.Application.Current.MainWindow
+                Owner = App.GetMainWindow()
             };
             win.ShowDialog();
         }
