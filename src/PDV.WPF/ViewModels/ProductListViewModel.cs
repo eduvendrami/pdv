@@ -25,8 +25,12 @@ public partial class ProductListViewModel : BaseViewModel
     // ── Lookups ───────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<CategoryDto> _categories = new();
 
-    // ── Selection ─────────────────────────────────────────────────────────
+    // ── Single selection (used by row double-click) ───────────────────────
     [ObservableProperty] private ProductDto? _selectedProduct;
+
+    // ── Multi-selection (synced from code-behind via SelectionChanged) ────
+    [ObservableProperty] private int _selectedCount = 0;
+    public List<ProductDto> SelectedProducts { get; set; } = new();
 
     // ── Role-based permissions ────────────────────────────────────────────
     public bool CanEdit       => Helpers.SessionManager.CanEditProducts;
@@ -118,7 +122,7 @@ public partial class ProductListViewModel : BaseViewModel
         var dialog = new Views.ProductEditDialog
         {
             DataContext = vm,
-            Owner = System.Windows.Application.Current.MainWindow
+            Owner = App.GetMainWindow()
         };
         if (dialog.ShowDialog() == true)
             await LoadAsync();
@@ -133,10 +137,68 @@ public partial class ProductListViewModel : BaseViewModel
         var dialog = new Views.ProductEditDialog
         {
             DataContext = vm,
-            Owner = System.Windows.Application.Current.MainWindow
+            Owner = App.GetMainWindow()
         };
         if (dialog.ShowDialog() == true)
             await LoadAsync();
+    }
+
+    // ── Bulk commands (Admin only) ────────────────────────────────────────
+    private bool HasSelection() => SelectedCount > 0;
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public async Task BulkActivate()
+    {
+        var targets = SelectedProducts.Where(p => !p.IsActive).ToList();
+        if (targets.Count == 0) return;
+        var confirm = System.Windows.MessageBox.Show(
+            $"Ativar {targets.Count} produto(s) selecionado(s)?",
+            "Confirmar", System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        IsBusy = true;
+        try { foreach (var p in targets) await _productService.SetActiveAsync(p.Id, true); }
+        finally { IsBusy = false; }
+        await LoadAsync();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public async Task BulkDeactivate()
+    {
+        var targets = SelectedProducts.Where(p => p.IsActive).ToList();
+        if (targets.Count == 0) return;
+        var confirm = System.Windows.MessageBox.Show(
+            $"Desativar {targets.Count} produto(s) selecionado(s)?",
+            "Confirmar", System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        IsBusy = true;
+        try { foreach (var p in targets) await _productService.SetActiveAsync(p.Id, false); }
+        finally { IsBusy = false; }
+        await LoadAsync();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public async Task BulkDelete()
+    {
+        var count = SelectedProducts.Count;
+        var confirm = System.Windows.MessageBox.Show(
+            $"Excluir permanentemente {count} produto(s)?\n\nEsta ação não pode ser desfeita.",
+            "Confirmar exclusão", System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        IsBusy = true;
+        try { foreach (var p in SelectedProducts.ToList()) await _productService.DeleteAsync(p.Id); }
+        finally { IsBusy = false; }
+        await LoadAsync();
+    }
+
+    // Notify CanExecute when SelectedCount changes
+    partial void OnSelectedCountChanged(int value)
+    {
+        BulkActivateCommand.NotifyCanExecuteChanged();
+        BulkDeactivateCommand.NotifyCanExecuteChanged();
+        BulkDeleteCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]

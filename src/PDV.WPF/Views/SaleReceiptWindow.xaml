@@ -1,0 +1,257 @@
+<Window x:Class="PDV.WPF.Views.SaleReceiptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Resumo da Venda"
+        Height="700" Width="720"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Style="{StaticResource MaterialDesignWindow}">
+
+    <DockPanel>
+
+        <!-- ══ Barra de botões (fora da área de impressão) ══ -->
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                Padding="16,10" BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource MaterialDesign.Brush.Primary}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BtnPrint"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Click="BtnPrint_Click"
+                        IsDefault="True"
+                        ToolTip="Gerar PDF (Enter)"
+                        Width="140" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FilePdfBox" Width="18" Height="18"
+                                                 VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Gerar PDF" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Content="Fechar"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Click="BtnClose_Click"
+                        IsCancel="True"
+                        ToolTip="Fechar (Esc)"
+                        Width="100"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ══ Área do documento (ScrollViewer) ══ -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F0F0">
+            <Border Margin="24" Padding="0" Background="White"
+                    BorderBrush="#444444" BorderThickness="1.5">
+                <Grid Grid.IsSharedSizeScope="True">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>  <!-- Cabeçalho timbrado -->
+                        <RowDefinition Height="Auto"/>  <!-- Tabela de itens -->
+                        <RowDefinition Height="Auto"/>  <!-- Totais -->
+                        <RowDefinition Height="Auto"/>  <!-- Pagamentos -->
+                    </Grid.RowDefinitions>
+
+                    <!-- ══════════ CABEÇALHO TIMBRADO ══════════ -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>   <!-- Logo -->
+                            <ColumnDefinition Width="*"/>      <!-- Dados empresa -->
+                            <ColumnDefinition Width="Auto"/>   <!-- Box dados da venda -->
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Logo -->
+                        <Border Grid.Column="0" Width="150" MinHeight="110"
+                                BorderBrush="#444444" BorderThickness="0,0,1.5,1.5"
+                                Background="White">
+                            <Grid>
+                                <Image x:Name="LogoImage" Stretch="Uniform"
+                                       Margin="10" Visibility="Collapsed"/>
+                                <StackPanel x:Name="LogoPlaceholder"
+                                            VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="ImagePlus" Width="34" Height="34"
+                                                             HorizontalAlignment="Center"
+                                                             Foreground="#BBBBBB"/>
+                                    <TextBlock Text="LOGO" FontSize="11" FontWeight="Bold"
+                                               Foreground="#BBBBBB" HorizontalAlignment="Center"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Dados da empresa -->
+                        <Border Grid.Column="1" Padding="14,10"
+                                BorderBrush="#444444" BorderThickness="0,0,1.5,1.5"
+                                Background="White">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="CompanyNameText"
+                                           FontSize="15" FontWeight="Bold"
+                                           Foreground="#1565C0" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="CnpjText"     FontSize="11" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="AddressText"  FontSize="11" Margin="0,1,0,0"/>
+                                <TextBlock x:Name="PhonesText"   FontSize="11" Margin="0,1,0,0"/>
+                                <TextBlock x:Name="EmailText"    FontSize="11" Margin="0,1,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Box com dados da venda (estilo do print) -->
+                        <Border Grid.Column="2" Width="240"
+                                BorderBrush="#444444" BorderThickness="0,0,0,1.5"
+                                Background="White">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Grid.Column="0" Background="#FBE0CE"
+                                        BorderBrush="#444444" BorderThickness="0,0,1,1" Padding="8,6">
+                                    <TextBlock Text="VENDA Nº" FontWeight="Bold" FontSize="11"/>
+                                </Border>
+                                <Border Grid.Row="0" Grid.Column="1"
+                                        BorderBrush="#444444" BorderThickness="0,0,0,1" Padding="8,6">
+                                    <TextBlock x:Name="TxtSaleNumber" FontSize="11"/>
+                                </Border>
+
+                                <Border Grid.Row="1" Grid.Column="0" Background="#FBE0CE"
+                                        BorderBrush="#444444" BorderThickness="0,0,1,1" Padding="8,6">
+                                    <TextBlock Text="DATA" FontWeight="Bold" FontSize="11"/>
+                                </Border>
+                                <Border Grid.Row="1" Grid.Column="1"
+                                        BorderBrush="#444444" BorderThickness="0,0,0,1" Padding="8,6">
+                                    <TextBlock x:Name="TxtDate" FontSize="11"/>
+                                </Border>
+
+                                <Border Grid.Row="2" Grid.Column="0" Background="#FBE0CE"
+                                        BorderBrush="#444444" BorderThickness="0,0,1,1" Padding="8,6">
+                                    <TextBlock Text="CLIENTE" FontWeight="Bold" FontSize="11"/>
+                                </Border>
+                                <Border Grid.Row="2" Grid.Column="1"
+                                        BorderBrush="#444444" BorderThickness="0,0,0,1" Padding="8,6">
+                                    <TextBlock x:Name="TxtCustomer" FontSize="11" TextWrapping="Wrap"/>
+                                </Border>
+
+                                <Border Grid.Row="3" Grid.Column="0" Background="#FBE0CE"
+                                        BorderBrush="#444444" BorderThickness="0,0,1,0" Padding="8,6">
+                                    <TextBlock Text="OPERADOR" FontWeight="Bold" FontSize="11"/>
+                                </Border>
+                                <Border Grid.Row="3" Grid.Column="1" Padding="8,6">
+                                    <TextBlock x:Name="TxtUser" FontSize="11"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- ══════════ TABELA DE ITENS ══════════ -->
+                    <DataGrid x:Name="ItemsGrid" Grid.Row="1"
+                              AutoGenerateColumns="False" CanUserAddRows="False"
+                              IsReadOnly="True" HeadersVisibility="Column"
+                              GridLinesVisibility="All"
+                              HorizontalGridLinesBrush="#CCCCCC" VerticalGridLinesBrush="#CCCCCC"
+                              Background="White" RowBackground="White"
+                              BorderThickness="0" Margin="0"
+                              ColumnHeaderStyle="{x:Null}" CellStyle="{x:Null}" RowStyle="{x:Null}">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#FBE0CE"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="Padding" Value="8,6"/>
+                                <Setter Property="BorderBrush" Value="#CCCCCC"/>
+                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="QUANTIDADE" Width="110"
+                                                Binding="{Binding Quantity, StringFormat=N2}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="Padding" Value="6,4"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="DESCRIÇÃO" Width="*"
+                                                Binding="{Binding ProductName}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="8,4"/>
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="VALOR" Width="120"
+                                                Binding="{Binding UnitPrice, StringFormat=C2}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        <Setter Property="Padding" Value="8,4"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="VALOR TOTAL" Width="130"
+                                                Binding="{Binding TotalPrice, StringFormat=C2}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,4"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- ══════════ TOTAIS ══════════ -->
+                    <Border Grid.Row="2" BorderBrush="#444444" BorderThickness="0,1.5,0,0">
+                        <StackPanel HorizontalAlignment="Right" Margin="0,8,12,8" MinWidth="280">
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="Subtotal:" Opacity="0.75"/>
+                                <TextBlock x:Name="TxtSubtotal" Grid.Column="1" TextAlignment="Right" MinWidth="110"/>
+                            </Grid>
+                            <Grid x:Name="RowDiscount" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="Desconto:" Foreground="#E53935"/>
+                                <TextBlock x:Name="TxtDiscount" Grid.Column="1" TextAlignment="Right" MinWidth="110" Foreground="#E53935"/>
+                            </Grid>
+                            <Border Background="#FBE0CE" Padding="10,6" Margin="0,4,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="TOTAL:" FontSize="16" FontWeight="Bold"/>
+                                    <TextBlock x:Name="TxtTotal" Grid.Column="1" TextAlignment="Right"
+                                               FontSize="16" FontWeight="Bold" MinWidth="110"
+                                               Foreground="#1565C0"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ══════════ PAGAMENTOS ══════════ -->
+                    <StackPanel Grid.Row="3" Margin="12,4,12,12">
+                        <TextBlock Text="PAGAMENTOS" FontSize="11" FontWeight="Bold" Opacity="0.5" Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="PaymentsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2,0,2">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Method}" FontSize="12"/>
+                                        <TextBlock Text="{Binding Amount, StringFormat=C2}" Grid.Column="1"
+                                                   FontSize="12" FontWeight="SemiBold" TextAlignment="Right" MinWidth="110"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Obrigado pela preferência!"
+                                   HorizontalAlignment="Center"
+                                   FontSize="12" Opacity="0.55" Margin="0,14,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

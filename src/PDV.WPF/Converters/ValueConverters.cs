@@ -81,6 +81,28 @@ public class EmptyStringToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts decimal ↔ string using pt-BR locale (comma as decimal separator).
+/// Use with UpdateSourceTrigger=LostFocus so the user can type "4,50" freely.
+/// </summary>
+public class DecimalInputConverter : IValueConverter
+{
+    private static readonly CultureInfo PtBR = new CultureInfo("pt-BR");
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is decimal d && d != 0 ? d.ToString("N2", PtBR) : string.Empty;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var str = value?.ToString()?.Trim().Replace(" ", "") ?? "";
+        if (string.IsNullOrEmpty(str)) return 0m;
+        // Accept both "4.50" and "4,50"
+        if (decimal.TryParse(str, NumberStyles.Number, PtBR, out var r)) return r;
+        if (decimal.TryParse(str, NumberStyles.Number, CultureInfo.InvariantCulture, out var r2)) return r2;
+        return 0m;
+    }
+}
+
+/// <summary>
 /// Returns one of two strings based on a bool value.
 /// ConverterParameter = "TrueText|FalseText"
 /// </summary>

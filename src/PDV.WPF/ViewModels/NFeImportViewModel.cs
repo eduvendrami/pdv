@@ -13,18 +13,18 @@ namespace PDV.WPF.ViewModels;
 public partial class NFeItemVm : ObservableObject
 {
     [ObservableProperty] private bool    _import    = true;
+    [ObservableProperty] private string  _name         = string.Empty;
+    [ObservableProperty] private string  _internalCode = string.Empty;
+    [ObservableProperty] private string? _barcode;
+    [ObservableProperty] private decimal _quantity;
+    [ObservableProperty] private decimal _costPrice;
     [ObservableProperty] private decimal _salePrice;
 
     public string        Status       { get; init; } = "Novo";
     public bool          IsExisting   { get; init; }
     public int?          ExistingId   { get; init; }
-    public string        InternalCode { get; init; } = string.Empty;
-    public string?       Barcode      { get; init; }
-    public string        Name         { get; init; } = string.Empty;
     public string        UnitLabel    { get; init; } = string.Empty;
     public UnitOfMeasure Unit         { get; init; }
-    public decimal       Quantity     { get; init; }
-    public decimal       CostPrice    { get; init; }
 }
 
 // ── ViewModel principal ───────────────────────────────────────────────────────
@@ -44,7 +44,6 @@ public partial class NFeImportViewModel : BaseViewModel
     [ObservableProperty] private int?   _existingSupplierId;
 
     // ── Opções ────────────────────────────────────────────────────────────────
-    [ObservableProperty] private decimal _defaultMarkup = 30m;
     [ObservableProperty] private bool    _addToStock    = true;
 
     // ── Itens / resultado ─────────────────────────────────────────────────────
@@ -56,6 +55,9 @@ public partial class NFeImportViewModel : BaseViewModel
     public int TotalNew      => Items.Count(i => !i.IsExisting);
     public int TotalExisting => Items.Count(i =>  i.IsExisting);
     public int TotalSelected => Items.Count(i =>  i.Import);
+
+    /// <summary>Disparado quando a lista de itens termina de carregar (para a View focar o 1º item).</summary>
+    public event Action? ItemsLoaded;
 
     public NFeImportViewModel(IProductService productService, ISupplierService supplierService)
     {
@@ -122,9 +124,9 @@ public partial class NFeImportViewModel : BaseViewModel
                     (!string.IsNullOrWhiteSpace(item.Barcode)      && p.Barcode      == item.Barcode) ||
                     (!string.IsNullOrWhiteSpace(item.InternalCode) && p.InternalCode == item.InternalCode));
 
-                var salePrice = existing?.SalePrice > 0
-                    ? existing.SalePrice
-                    : Math.Round(item.UnitCostPrice * (1 + DefaultMarkup / 100m), 2);
+                // Produto já cadastrado mantém seu preço atual; novos começam zerados
+                // para que o operador informe o preço de venda antes de importar.
+                var salePrice = existing?.SalePrice > 0 ? existing.SalePrice : 0m;
 
                 return new NFeItemVm
                 {
@@ -147,19 +149,13 @@ public partial class NFeImportViewModel : BaseViewModel
             OnPropertyChanged(nameof(TotalExisting));
             OnPropertyChanged(nameof(TotalSelected));
             FileLoaded = true;
+            ItemsLoaded?.Invoke();
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Erro ao ler o arquivo: {ex.Message}";
         }
         finally { IsBusy = false; }
-    }
-
-    // Recalcula preços de venda quando o markup padrão muda
-    partial void OnDefaultMarkupChanged(decimal value)
-    {
-        foreach (var item in Items.Where(i => !i.IsExisting))
-            item.SalePrice = Math.Round(item.CostPrice * (1 + value / 100m), 2);
     }
 
     // ── Importar ──────────────────────────────────────────────────────────────
@@ -170,6 +166,15 @@ public partial class NFeImportViewModel : BaseViewModel
 
         ErrorMessage  = string.Empty;
         ResultMessage = string.Empty;
+
+        // Não permite importar enquanto houver item selecionado sem preço de venda preenchido.
+        var semPreco = Items.Where(i => i.Import && i.SalePrice <= 0).Select(i => i.Name).ToList();
+        if (semPreco.Count > 0)
+        {
+            ErrorMessage = "Preencha o preço de venda antes de importar: " + string.Join(", ", semPreco) + ".";
+            return;
+        }
+
         IsBusy        = true;
 
         int createdProducts  = 0;

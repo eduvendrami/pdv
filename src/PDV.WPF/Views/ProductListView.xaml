@@ -45,19 +45,16 @@
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="12"/>
-                    <!-- Admin: show inactive -->
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Search text -->
                 <TextBox Grid.Column="0"
                          materialDesign:HintAssist.Hint="Buscar por nome, barcode, código ou categoria..."
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <!-- Category filter -->
                 <ComboBox Grid.Column="2"
                           materialDesign:HintAssist.Hint="Categoria"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
@@ -66,7 +63,6 @@
                           SelectedValuePath="Id"
                           SelectedValue="{Binding FilterCategoryId}"/>
 
-                <!-- Low-stock toggle -->
                 <ToggleButton Grid.Column="4"
                               Style="{StaticResource MaterialDesignOutlinedButton}"
                               IsChecked="{Binding ShowLowStockOnly}"
@@ -78,7 +74,6 @@
                     </StackPanel>
                 </ToggleButton>
 
-                <!-- Show inactive (Admin only) -->
                 <ToggleButton Grid.Column="6"
                               Style="{StaticResource MaterialDesignOutlinedButton}"
                               IsChecked="{Binding ShowInactive}"
@@ -91,7 +86,6 @@
                     </StackPanel>
                 </ToggleButton>
 
-                <!-- Clear filters -->
                 <Button Grid.Column="8"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         Command="{Binding ClearFiltersCommand}"
@@ -101,28 +95,153 @@
             </Grid>
         </Border>
 
-        <!-- ══ Summary chips ══ -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-            <Border Background="{DynamicResource MaterialDesign.Brush.Primary}"
-                    CornerRadius="12" Padding="10,3" Margin="0,0,8,0">
-                <TextBlock Foreground="White" FontSize="11">
-                    <Run Text="{Binding Products.Count, Mode=OneWay}"/>
-                    <Run Text=" produto(s) exibido(s)"/>
-                </TextBlock>
-            </Border>
-        </StackPanel>
+        <!-- ══ Summary + bulk actions bar ══ -->
+        <Border DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Summary chips -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                            CornerRadius="12" Padding="10,3" Margin="0,0,8,0">
+                        <TextBlock Foreground="White" FontSize="11">
+                            <Run Text="{Binding Products.Count, Mode=OneWay}"/>
+                            <Run Text=" produto(s) exibido(s)"/>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- Selected count chip — shown only when something is selected -->
+                    <Border CornerRadius="12" Padding="10,3"
+                            Background="#1565C0"
+                            Visibility="{Binding SelectedCount,
+                                         Converter={StaticResource BoolToVis}}">
+                        <TextBlock Foreground="White" FontSize="11">
+                            <Run Text="{Binding SelectedCount, Mode=OneWay}"/>
+                            <Run Text=" selecionado(s)"/>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+
+                <!-- Bulk action buttons — Admin only -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                            Visibility="{Binding CanToggle, Converter={StaticResource BoolToVis}}">
+
+                    <!-- Selecionar / Desmarcar todos -->
+                    <Button x:Name="BtnSelectAll"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Click="SelectAll_Click"
+                            Margin="0,0,6,0" Padding="10,4"
+                            ToolTip="Selecionar todos os produtos visíveis">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="CheckboxMultipleMarked" Width="16" Height="16"
+                                                     VerticalAlignment="Center"/>
+                            <TextBlock Text="Todos" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnDeselectAll"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Click="DeselectAll_Click"
+                            Margin="0,0,10,0" Padding="10,4"
+                            ToolTip="Desmarcar todos">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="CheckboxMultipleBlankOutline" Width="16" Height="16"
+                                                     VerticalAlignment="Center"/>
+                            <TextBlock Text="Nenhum" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding BulkActivateCommand}"
+                            Margin="0,0,6,0" Padding="10,4"
+                            ToolTip="Ativar produtos selecionados">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ToggleSwitch" Width="16" Height="16"
+                                                     Foreground="#388E3C" VerticalAlignment="Center"/>
+                            <TextBlock Text="Ativar" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding BulkDeactivateCommand}"
+                            Margin="0,0,6,0" Padding="10,4"
+                            ToolTip="Desativar produtos selecionados">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ToggleSwitchOff" Width="16" Height="16"
+                                                     Foreground="#9E9E9E" VerticalAlignment="Center"/>
+                            <TextBlock Text="Desativar" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Command="{Binding BulkDeleteCommand}"
+                            Padding="10,4"
+                            Foreground="#E53935"
+                            BorderBrush="#E53935"
+                            ToolTip="Excluir permanentemente os selecionados">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="DeleteForever" Width="16" Height="16"
+                                                     Foreground="#E53935" VerticalAlignment="Center"/>
+                            <TextBlock Text="Excluir" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- ══ DataGrid ══ -->
-        <DataGrid ItemsSource="{Binding Products}"
+        <DataGrid x:Name="ProductGrid"
+                  ItemsSource="{Binding Products}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   IsReadOnly="True"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"
                   SelectedItem="{Binding SelectedProduct}"
+                  SelectionChanged="DataGrid_SelectionChanged"
+                  PreviewMouseLeftButtonDown="DataGrid_PreviewMouseLeftButtonDown"
                   Style="{StaticResource MaterialDesignDataGrid}"
                   materialDesign:DataGridAssist.CellPadding="8,6"
                   materialDesign:DataGridAssist.ColumnHeaderPadding="8,6">
 
             <DataGrid.Columns>
+
+                <!-- Checkbox de seleção -->
+                <DataGridTemplateColumn Width="36" CanUserSort="False" CanUserResize="False">
+                    <DataGridTemplateColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <!-- Header checkbox handled by click/drag; just decorative here -->
+                            <materialDesign:PackIcon Kind="CheckboxMultipleBlankOutline"
+                                                     Width="16" Height="16" Opacity="0.5"
+                                                     VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.HeaderTemplate>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <!-- Visual indicator: filled when row is selected -->
+                            <materialDesign:PackIcon Width="16" Height="16"
+                                                     VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Kind"       Value="CheckboxBlankOutline"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.ForegroundLight}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected,
+                                                         RelativeSource={RelativeSource AncestorType=DataGridRow}}"
+                                                         Value="True">
+                                                <Setter Property="Kind"       Value="CheckboxMarked"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Status chip -->
                 <DataGridTemplateColumn Header="Status" Width="85" SortMemberPath="IsActive">
@@ -158,22 +277,19 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTextColumn Header="Código"   Binding="{Binding InternalCode}" Width="80"/>
-                <DataGridTextColumn Header="Barcode"  Binding="{Binding Barcode}"      Width="115"/>
-                <DataGridTextColumn Header="Nome"     Binding="{Binding Name}"         Width="*"/>
+                <DataGridTextColumn Header="Código"    Binding="{Binding InternalCode}" Width="80"/>
+                <DataGridTextColumn Header="Barcode"   Binding="{Binding Barcode}"      Width="115"/>
+                <DataGridTextColumn Header="Nome"      Binding="{Binding Name}"         Width="*"/>
                 <DataGridTextColumn Header="Categoria" Binding="{Binding CategoryName}" Width="110"/>
 
-                <!-- Sale price -->
                 <DataGridTextColumn Header="Venda (R$)"
                                     Binding="{Binding SalePrice, StringFormat=C2}"
                                     Width="95"/>
 
-                <!-- Margin % — visible to managers/admin -->
                 <DataGridTextColumn Header="Markup"
                                     Binding="{Binding Margin, StringFormat=N1}"
                                     Width="70"/>
 
-                <!-- Stock -->
                 <DataGridTemplateColumn Header="Estoque" Width="85" SortMemberPath="StockQuantity">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -197,13 +313,12 @@
 
                 <DataGridTextColumn Header="Un." Binding="{Binding UnitOfMeasure}" Width="60"/>
 
-                <!-- Actions column -->
+                <!-- Actions column (individual row) -->
                 <DataGridTemplateColumn Header="Ações" Width="130">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
 
-                                <!-- Editar — Gerente+ -->
                                 <Button Style="{StaticResource MaterialDesignIconButton}"
                                         Command="{Binding DataContext.EditProductCommand,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -215,7 +330,6 @@
                                     <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18"/>
                                 </Button>
 
-                                <!-- Ativar/Desativar — Admin only -->
                                 <Button Style="{StaticResource MaterialDesignIconButton}"
                                         Command="{Binding DataContext.ToggleActiveCommand,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -241,7 +355,6 @@
                                     </materialDesign:PackIcon>
                                 </Button>
 
-                                <!-- Excluir permanente — Admin only -->
                                 <Button Style="{StaticResource MaterialDesignIconButton}"
                                         Command="{Binding DataContext.DeleteProductCommand,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -261,7 +374,6 @@
 
             </DataGrid.Columns>
 
-            <!-- Row tinting: inactive = grey-out, low-stock = light red -->
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
                     <Style.Triggers>

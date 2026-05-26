@@ -1,8 +1,9 @@
 using PDV.Domain.Enums;
+using PDV.Domain.Interfaces;
 
 namespace PDV.Domain.Entities;
 
-public class Product : BaseEntity
+public class Product : BaseEntity, IConcurrencyToken
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -19,4 +20,7 @@ public class Product : BaseEntity
     public Supplier? Supplier { get; set; }
     public ICollection<SaleItem> SaleItems { get; set; } = new List<SaleItem>();
     public ICollection<StockMovement> StockMovements { get; set; } = new List<StockMovement>();
+
+    /// <summary>Token de concorrência otimista (gerenciado pelo AppDbContext).</summary>
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

@@ -39,6 +39,9 @@ public static class SessionManager
     /// <summary>Gerente+ can apply or edit discounts on sales.</summary>
     public static bool CanApplyDiscount     => IsManager;
 
+    /// <summary>Gerente+ can override the unit price of a sale item (preço manual).</summary>
+    public static bool CanEditPrice          => IsManager;
+
     /// <summary>Gerente+ can create and edit products.</summary>
     public static bool CanEditProducts      => IsManager;
 

@@ -15,6 +15,7 @@
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
         <conv:EmptyStringToVisibilityConverter x:Key="StrToVis"/>
         <conv:CurrencyConverter                x:Key="Currency"/>
+        <conv:DecimalInputConverter            x:Key="DecimalInput"/>
     </Window.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -97,12 +98,16 @@
                 <TextBox Grid.Column="0"
                          materialDesign:HintAssist.Hint="Preço de Custo (R$)"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding CostPrice,
+                                Converter={StaticResource DecimalInput},
+                                UpdateSourceTrigger=LostFocus}"
                          Visibility="{Binding CanEditCost, Converter={StaticResource BoolToVis}}"/>
                 <TextBox Grid.Column="2"
                          materialDesign:HintAssist.Hint="Preço de Venda (R$) *"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Text="{Binding SalePrice, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding SalePrice,
+                                Converter={StaticResource DecimalInput},
+                                UpdateSourceTrigger=LostFocus}"/>
             </Grid>
 
             <!-- Margem calculada (Admin only) -->
@@ -134,11 +139,15 @@
                 <TextBox Grid.Column="0"
                          materialDesign:HintAssist.Hint="Qtd. em Estoque"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Text="{Binding StockQuantity, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding StockQuantity,
+                                Converter={StaticResource DecimalInput},
+                                UpdateSourceTrigger=LostFocus}"/>
                 <TextBox Grid.Column="2"
                          materialDesign:HintAssist.Hint="Qtd. Mínima (alerta)"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Text="{Binding MinStockQuantity, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding MinStockQuantity,
+                                Converter={StaticResource DecimalInput},
+                                UpdateSourceTrigger=LostFocus}"/>
             </Grid>
 
             <!-- Error -->

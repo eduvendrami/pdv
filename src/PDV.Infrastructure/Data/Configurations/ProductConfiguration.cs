@@ -20,5 +20,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasOne(p => p.Category).WithMany(c => c.Products).HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne(p => p.Supplier).WithMany(s => s.Products).HasForeignKey(p => p.SupplierId).OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(p => p.Barcode);
+
+        // Concorrência otimista: o SQLite não tem rowversion nativo, então o token
+        // é regenerado manualmente no AppDbContext.SaveChanges e comparado no UPDATE.
+        builder.Property(p => p.RowVersion).IsConcurrencyToken();
     }
 }

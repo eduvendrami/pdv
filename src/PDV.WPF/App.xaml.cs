@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PDV.Application;
@@ -21,6 +23,26 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        // ── Licença QuestPDF (Community — gratuita) ───────────────────────
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        // ── Capturadores globais de exceções ──────────────────────────────
+        DispatcherUnhandledException += (_, ex) =>
+        {
+            ShowFatalError(ex.Exception);
+            ex.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
+        {
+            if (ex.ExceptionObject is Exception exception)
+                ShowFatalError(exception);
+        };
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, ex) =>
+        {
+            ex.SetObserved();
+            // Silencioso para tasks em background — não derruba o app
+        };
+
         // ── Banco de dados em %LocalAppData%\PDV\pdv.db ───────────────────
         var appData = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -34,6 +56,12 @@ public partial class App : System.Windows.Application
             {
                 services.AddInfrastructure($"Data Source={dbPath}");
                 services.AddApplication();
+
+                // BackupService como singleton para reutilizar no ViewModel
+                services.AddSingleton(_ => new BackupService(dbPath));
+
+                // Serviço de diálogos modais (desacopla ViewModels das Views)
+                services.AddSingleton<IDialogService, DialogService>();
 
                 // ViewModels
                 services.AddTransient<LoginViewModel>();
@@ -52,15 +80,16 @@ public partial class App : System.Windows.Application
                 services.AddTransient<UserListViewModel>();
                 services.AddTransient<UserEditViewModel>();
                 services.AddTransient<NFeImportViewModel>();
+                services.AddTransient<BackupViewModel>();
             })
             .Build();
 
         await _host.StartAsync();
 
         // ── Migração + seed ───────────────────────────────────────────────
-        using (var scope = _host.Services.CreateScope())
+        var dbFactory = _host.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        await using (var db = await dbFactory.CreateDbContextAsync())
         {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await DbSeeder.SeedAsync(db);
 
             // ── Roteamento da tela inicial ────────────────────────────────
@@ -78,16 +107,44 @@ public partial class App : System.Windows.Application
         }
 
         // ── Backup automático a cada 6 horas ──────────────────────────────
-        var backupService = new BackupService(dbPath);
+        var backupService = _host.Services.GetRequiredService<BackupService>();
         _backupTimer = new System.Threading.Timer(
             _ => backupService.CreateBackup(),
             null,
             TimeSpan.FromHours(6),
             TimeSpan.FromHours(6));
 
+        // ── Atalho na área de trabalho ────────────────────────────────────────
+        CreateDesktopShortcutIfNeeded();
+
         // ── Verificação silenciosa de atualização (background) ─────────────
         // Aguarda 8 s para não atrasar a exibição da tela de login/setup.
         _ = CheckForUpdateInBackgroundAsync();
+    }
+
+    private static void CreateDesktopShortcutIfNeeded()
+    {
+        try
+        {
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            var lnkPath = Path.Combine(desktop, "PDV.lnk");
+            if (File.Exists(lnkPath)) return;
+
+            var currentExe = Process.GetCurrentProcess().MainModule!.FileName;
+            var shellType  = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType == null) return;
+
+            dynamic shell    = Activator.CreateInstance(shellType)!;
+            dynamic shortcut = shell.CreateShortcut(lnkPath);
+            shortcut.TargetPath       = currentExe;
+            shortcut.WorkingDirectory = Path.GetDirectoryName(currentExe);
+            shortcut.Description      = "PDV Material de Construção";
+            shortcut.Save();
+        }
+        catch
+        {
+            // Falha silenciosa — não bloqueia a inicialização
+        }
     }
 
     private static async Task CheckForUpdateInBackgroundAsync()
@@ -104,7 +161,7 @@ public partial class App : System.Windows.Application
             {
                 var win = new Views.UpdateProgressWindow(release)
                 {
-                    Owner = Current.MainWindow
+                    Owner = GetMainWindow()
                 };
                 win.Show();
             });
@@ -128,4 +185,28 @@ public partial class App : System.Windows.Application
 
     public static T GetService<T>() where T : notnull =>
         ((App)Current)._host!.Services.GetRequiredService<T>();
+
+    /// <summary>
+    /// Retorna a instância de MainWindow que está aberta no momento.
+    /// Evita usar Application.Current.MainWindow, que pode apontar para
+    /// uma janela já fechada (ex.: LoginWindow) e causar InvalidOperationException.
+    /// </summary>
+    public static System.Windows.Window? GetMainWindow() =>
+        Current.Windows.OfType<Views.MainWindow>().FirstOrDefault();
+
+    private static void ShowFatalError(Exception ex)
+    {
+        var msg = $"Ocorreu um erro inesperado:\n\n{ex.Message}";
+        if (ex.InnerException != null)
+            msg += $"\n\nDetalhe: {ex.InnerException.Message}";
+
+        try
+        {
+            System.Windows.MessageBox.Show(
+                msg, "Erro",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
+        catch { /* último recurso */ }
+    }
 }

@@ -8,7 +8,8 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Style="{StaticResource MaterialDesignWindow}"
-        KeyDown="Window_KeyDown">
+        KeyDown="Window_KeyDown"
+        Loaded="Window_Loaded">
     <Window.Resources>
         <conv:CurrencyConverter x:Key="Currency"/>
     </Window.Resources>

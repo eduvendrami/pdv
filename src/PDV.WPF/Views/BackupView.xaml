@@ -1,0 +1,177 @@
+<UserControl x:Class="PDV.WPF.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:PDV.WPF.Converters">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter        x:Key="BoolToVis"/>
+        <conv:EmptyStringToVisibilityConverter x:Key="StrToVis"/>
+    </UserControl.Resources>
+
+    <DockPanel Margin="24,20,24,20">
+
+        <!-- ══ Header ══ -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Backup do Banco de Dados" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="Backups automáticos a cada 6 horas, com cópia opcional para a nuvem (OneDrive/Google Drive). Gerencie, exporte ou restaure abaixo."
+                           Opacity="0.6" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Command="{Binding OpenBackupFolderCommand}"
+                    ToolTip="Abrir pasta de backups no Explorador de Arquivos">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="FolderOutline" Width="18" Height="18"
+                                             VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="Abrir pasta" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button Grid.Column="3"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Command="{Binding CreateBackupNowCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="DatabaseExport" Width="18" Height="18"
+                                             VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="Criar backup agora" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- ══ Status message ══ -->
+        <Border DockPanel.Dock="Top"
+                CornerRadius="6" Padding="14,8" Margin="0,0,0,12"
+                Background="#E8F5E9"
+                Visibility="{Binding StatusMessage, Converter={StaticResource StrToVis}}">
+            <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12"/>
+        </Border>
+
+        <!-- ══ Info cards ══ -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
+            <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    CornerRadius="8" Padding="16,12" Margin="0,0,12,0"
+                    materialDesign:ElevationAssist.Elevation="Dp1">
+                <StackPanel>
+                    <TextBlock Text="TOTAL DE BACKUPS" FontSize="10" FontWeight="Bold" Opacity="0.5"/>
+                    <TextBlock FontSize="28" FontWeight="Bold" Margin="0,4,0,0">
+                        <Run Text="{Binding Backups.Count, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    CornerRadius="8" Padding="16,12" Margin="0,0,12,0"
+                    materialDesign:ElevationAssist.Elevation="Dp1">
+                <StackPanel>
+                    <TextBlock Text="LOCAL DOS BACKUPS" FontSize="10" FontWeight="Bold" Opacity="0.5"/>
+                    <TextBlock FontSize="11" Margin="0,6,0,0" Opacity="0.8"
+                               Text="{Binding BackupDir}" TextWrapping="Wrap" MaxWidth="380"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Backup na nuvem (pasta externa sincronizada) -->
+            <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    CornerRadius="8" Padding="16,12"
+                    materialDesign:ElevationAssist.Elevation="Dp1">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CloudUploadOutline" Width="16" Height="16"
+                                                 VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.6"/>
+                        <TextBlock Text="BACKUP NA NUVEM (EXTERNO)" FontSize="10" FontWeight="Bold" Opacity="0.5"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock FontSize="11" Margin="0,6,0,0" Opacity="0.8"
+                               Text="{Binding ExternalBackupDir}" TextWrapping="Wrap" MaxWidth="380"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Padding="10,2" Height="30" FontSize="11"
+                                Command="{Binding ChooseExternalFolderCommand}"
+                                ToolTip="Escolher pasta sincronizada (OneDrive, Google Drive, Dropbox)">
+                            <TextBlock Text="Configurar pasta"/>
+                        </Button>
+                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                Padding="10,2" Height="30" FontSize="11" Margin="6,0,0,0"
+                                Command="{Binding DisableExternalFolderCommand}">
+                            <TextBlock Text="Desativar"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- ══ Backup list ══ -->
+        <DataGrid ItemsSource="{Binding Backups}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True"
+                  SelectedItem="{Binding SelectedBackup}"
+                  Style="{StaticResource MaterialDesignDataGrid}"
+                  materialDesign:DataGridAssist.CellPadding="10,8"
+                  materialDesign:DataGridAssist.ColumnHeaderPadding="10,8">
+
+            <DataGrid.Columns>
+
+                <DataGridTextColumn Header="Arquivo"
+                                    Binding="{Binding FileName}" Width="*"/>
+
+                <DataGridTextColumn Header="Data / Hora"
+                                    Binding="{Binding CreatedAt, StringFormat=dd/MM/yyyy HH:mm:ss}"
+                                    Width="160"/>
+
+                <DataGridTextColumn Header="Tamanho"
+                                    Binding="{Binding SizeMb}" Width="90"/>
+
+                <DataGridTemplateColumn Header="Ações" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+
+                                <!-- Exportar (salvar em outro local) -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.ExportBackupCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="Exportar (salvar em outro local / USB)">
+                                    <materialDesign:PackIcon Kind="Download" Width="18" Height="18"/>
+                                </Button>
+
+                                <!-- Restaurar -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.RestoreBackupCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="#1565C0"
+                                        ToolTip="Restaurar este backup (reinicia o sistema)">
+                                    <materialDesign:PackIcon Kind="DatabaseImport" Width="18" Height="18"/>
+                                </Button>
+
+                                <!-- Excluir -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding DataContext.DeleteBackupFileCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="#E53935"
+                                        ToolTip="Excluir este arquivo de backup">
+                                    <materialDesign:PackIcon Kind="DeleteOutline" Width="18" Height="18"/>
+                                </Button>
+
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </DockPanel>
+</UserControl>

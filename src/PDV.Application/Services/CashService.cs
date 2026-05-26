@@ -8,24 +8,27 @@ namespace PDV.Application.Services;
 
 public class CashService : ICashService
 {
-    private readonly IUnitOfWork _uow;
+    private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IMapper _mapper;
 
-    public CashService(IUnitOfWork uow, IMapper mapper)
+    public CashService(IUnitOfWorkFactory uowFactory, IMapper mapper)
     {
-        _uow = uow;
+        _uowFactory = uowFactory;
         _mapper = mapper;
     }
 
     public async Task<CashSessionDto?> GetOpenSessionAsync()
     {
-        var session = await _uow.CashSessions.GetOpenSessionAsync();
+        using var uow = _uowFactory.Create();
+        var session = await uow.CashSessions.GetOpenSessionAsync();
         return session == null ? null : _mapper.Map<CashSessionDto>(session);
     }
 
     public async Task<CashSessionDto> OpenSessionAsync(OpenCashSessionDto dto, int userId)
     {
-        var existing = await _uow.CashSessions.GetOpenSessionAsync();
+        using var uow = _uowFactory.Create();
+
+        var existing = await uow.CashSessions.GetOpenSessionAsync();
         if (existing != null) throw new InvalidOperationException("Já existe um caixa aberto.");
 
         var session = new CashSession
@@ -39,17 +42,19 @@ public class CashService : ICashService
             Amount = dto.OpeningBalance,
             Description = "Abertura de caixa"
         });
-        await _uow.CashSessions.AddAsync(session);
-        await _uow.SaveChangesAsync();
+        await uow.CashSessions.AddAsync(session);
+        await uow.SaveChangesAsync();
         return _mapper.Map<CashSessionDto>(session);
     }
 
     public async Task<CashSessionDto> CloseSessionAsync(CloseCashSessionDto dto, int userId)
     {
-        var session = await _uow.CashSessions.GetOpenSessionAsync()
+        using var uow = _uowFactory.Create();
+
+        var session = await uow.CashSessions.GetOpenSessionAsync()
             ?? throw new InvalidOperationException("Nenhum caixa aberto.");
 
-        var salesTotal = await _uow.Sales.GetTotalByDateAsync(session.OpenedAt.Date);
+        var salesTotal = await uow.Sales.GetTotalByDateAsync(session.OpenedAt.Date);
         session.ExpectedBalance = session.OpeningBalance + salesTotal;
         session.ClosingBalance = dto.ClosingBalance;
         session.Difference = dto.ClosingBalance - session.ExpectedBalance;
@@ -63,14 +68,16 @@ public class CashService : ICashService
             Description = "Fechamento de caixa"
         });
 
-        await _uow.CashSessions.UpdateAsync(session);
-        await _uow.SaveChangesAsync();
+        await uow.CashSessions.UpdateAsync(session);
+        await uow.SaveChangesAsync();
         return _mapper.Map<CashSessionDto>(session);
     }
 
     public async Task AddMovementAsync(CashSupplyDto dto, int sessionId)
     {
-        var session = await _uow.CashSessions.GetWithMovementsAsync(sessionId)
+        using var uow = _uowFactory.Create();
+
+        var session = await uow.CashSessions.GetWithMovementsAsync(sessionId)
             ?? throw new InvalidOperationException("Sessão não encontrada.");
 
         session.Movements.Add(new CashMovement
@@ -80,7 +87,7 @@ public class CashService : ICashService
             Amount = dto.Amount,
             Description = dto.Description
         });
-        await _uow.CashSessions.UpdateAsync(session);
-        await _uow.SaveChangesAsync();
+        await uow.CashSessions.UpdateAsync(session);
+        await uow.SaveChangesAsync();
     }
 }

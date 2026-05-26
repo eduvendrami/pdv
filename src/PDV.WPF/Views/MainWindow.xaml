@@ -38,6 +38,9 @@
         <DataTemplate DataType="{x:Type vm:NFeImportViewModel}">
             <v:NFeImportView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BackupViewModel}">
+            <v:BackupView/>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
@@ -181,6 +184,15 @@
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="AccountCogOutline" Width="20" Height="20" VerticalAlignment="Center"/>
                                     <TextBlock Text="Usuários" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Padding="16,10" Command="{Binding NavigateToBackupCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="DatabaseExport" Width="20" Height="20" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Backup" Margin="12,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
