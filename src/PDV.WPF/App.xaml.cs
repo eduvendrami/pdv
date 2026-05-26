@@ -87,9 +87,21 @@ public partial class App : System.Windows.Application
         await _host.StartAsync();
 
         // ── Migração + seed ───────────────────────────────────────────────
+        var backupService = _host.Services.GetRequiredService<BackupService>();
         var dbFactory = _host.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         await using (var db = await dbFactory.CreateDbContextAsync())
         {
+            // Rede de segurança em atualizações: se há migrations pendentes
+            // (novo release), faz um backup do banco ANTES de aplicá-las.
+            // Garante um ponto de restauração a cada upgrade, mesmo que a
+            // migração falhe ou seja interrompida.
+            var pending = await db.Database.GetPendingMigrationsAsync();
+            if (pending.Any())
+            {
+                try { backupService.CreateBackup(); }
+                catch { /* backup best-effort: não bloqueia a inicialização */ }
+            }
+
             await DbSeeder.SeedAsync(db);
 
             // ── Roteamento da tela inicial ────────────────────────────────
@@ -107,7 +119,6 @@ public partial class App : System.Windows.Application
         }
 
         // ── Backup automático a cada 6 horas ──────────────────────────────
-        var backupService = _host.Services.GetRequiredService<BackupService>();
         _backupTimer = new System.Threading.Timer(
             _ => backupService.CreateBackup(),
             null,
